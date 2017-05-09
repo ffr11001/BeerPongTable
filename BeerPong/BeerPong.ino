@@ -1,29 +1,41 @@
+#include <SoftwareSerial.h>// import the serial library
 
-int Set1 = 3;
-int Set2 = 5;
-int Set3 = 6;
+SoftwareSerial BlueTooth(10, 11); // RX, TX
+
+int B_R = 3;
+int R_B = 5;
+int G_G = 6;
 
 int Up=0;
 int Fade=0;
 
+int Mode =0;
+
+char ch_arr[3];
 int updateTime = 10;
 
 int Step= 2;
-int lowEnd=25;
+int lowEnd=0;
 int highEnd=250;
 
 unsigned long S1Delay1 = 0;
 unsigned long S1Delay2 = 0;
 
+int inc = 0;
+
 void setup() {
   
-  pinMode(Set1, OUTPUT);
-  pinMode(Set2, OUTPUT);
-  pinMode(Set3, OUTPUT);
+  pinMode(B_R, OUTPUT);
+  pinMode(R_B, OUTPUT);
+  pinMode(G_G, OUTPUT);
 
-  analogWrite(Set1, 0);
-  analogWrite(Set2, 0);
-  analogWrite(Set3, 0);
+  analogWrite(B_R, 0);
+  analogWrite(R_B, 0);
+  analogWrite(G_G, 0);
+
+  BlueTooth.begin(9600);
+  Serial.begin(9600);
+  
 }
 
 void loop() {
@@ -50,8 +62,168 @@ void loop() {
         Fade=Fade+Step;
       break;
       }
+      
+    inc++;
+    inc= Reset(inc);
     }
 
-    analogWrite(Set1, Fade);
-    
+
+  switch(Mode){
+      case 0:
+        correctSide();
+      break;
+      case 1:
+        inverseSide();
+      break;
+      case 2:
+        greenOverload();
+      break;
+      case 3:
+        updateTime=200;
+        takeTurn(inc);
+      break;
+      case 4:
+        event();
+      break;
+      case 5:
+        updateTime=200;
+        madness(inc);
+      break;
+  }
+  
+  if(BlueTooth.available()>0){
+    String temp = BlueTooth.readString();
+    temp.toCharArray(ch_arr, 4);
+    Serial.println(ch_arr[0]);
+    Serial.println(ch_arr[1]);
+    Serial.println(ch_arr[2]);
+    Serial.println(ch_arr[3]); 
+    BlueTooth.flush(); 
+    Set(ch_arr);
+  }
 }
+
+void Set (char ch_arr[]){
+  
+  switch(ch_arr[0]){
+      case '0':
+        Mode= ch_arr[1] - '0';
+        Serial.println("-Mode"); 
+      break;
+      case '1':
+        updateTime = ch_arr[1] - '0' + 1;
+        Serial.println("!!!!!!Mode"); 
+      break;
+  }
+    Serial.println(Mode); 
+    Serial.println(updateTime);  
+}
+
+void correctSide (){
+  
+    analogWrite(B_R, Fade); 
+    analogWrite(R_B, 0);  
+    analogWrite(G_G, 0); 
+    
+  } 
+  
+void inverseSide (){
+  
+    analogWrite(B_R, 0); 
+    analogWrite(R_B, Fade);  
+    analogWrite(G_G, 0); 
+    
+  }  
+
+void greenOverload(){
+  
+    analogWrite(B_R, 0); 
+    analogWrite(R_B, 0);  
+    analogWrite(G_G, Fade); 
+  
+  }
+  
+void takeTurn (int i){
+
+  if(i % 2 == 0){ 
+    analogWrite(G_G, lowEnd); 
+    analogWrite(R_B, lowEnd); 
+    analogWrite(B_R, highEnd); 
+   }else{       
+    analogWrite(G_G, lowEnd); 
+    analogWrite(B_R, lowEnd);  
+    analogWrite(R_B, highEnd);  
+   }
+
+}
+
+void event (){
+  
+    analogWrite(B_R, Fade);
+    analogWrite(R_B, Fade); 
+    analogWrite(G_G, Fade); 
+  
+  }
+
+void madness (int i){
+
+  switch(i % 10){
+      case 0:
+        analogWrite(B_R, 255);
+        analogWrite(R_B, 0); 
+        analogWrite(G_G, 0); 
+      break;
+      case 1:
+        analogWrite(B_R, 125);
+        analogWrite(R_B, 125); 
+        analogWrite(G_G, 0); 
+      break;
+      case 2:
+        analogWrite(B_R, 0);
+        analogWrite(R_B, 255); 
+        analogWrite(G_G, 0); 
+      break;
+      case 3:
+        analogWrite(B_R, 0);
+        analogWrite(R_B, 125); 
+        analogWrite(G_G, 125); 
+      break;
+      case 4:
+        analogWrite(B_R, 0);
+        analogWrite(R_B, 0); 
+        analogWrite(G_G, 255); 
+      break;
+      case 5:
+        analogWrite(B_R, 255);
+        analogWrite(R_B, 0); 
+        analogWrite(G_G, 0); 
+      break;
+      case 6:
+        analogWrite(B_R, 0);
+        analogWrite(R_B, 255); 
+        analogWrite(G_G, 0); 
+      break;
+      case 7:
+        analogWrite(B_R, 0);
+        analogWrite(R_B, 0); 
+        analogWrite(G_G, 255); 
+      break;
+      case 8:
+        analogWrite(B_R, 100);
+        analogWrite(R_B, 100); 
+        analogWrite(G_G, 100); 
+      break;
+      case 9:
+        analogWrite(B_R, 0);
+        analogWrite(R_B, 0); 
+        analogWrite(G_G, 0); 
+      break;
+  }
+}
+
+int Reset (int i){
+  if(i>1000000){
+    i=0;
+    }
+  return i;
+  }
