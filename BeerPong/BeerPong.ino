@@ -1,38 +1,57 @@
-/ This program shown how to control arduino from PC Via Bluetooth
-// Connect ...
-// arduino>>bluetooth
-// D11   >>>  Rx
-// D10   >>>  Tx
-//Written By Mohannad Rawashdeh
-//for http://www.genotronex.com/
 
-// you will need arduino 1.0.1 or higher to run this sketch
+int Set1 = 3;
+int Set2 = 5;
+int Set3 = 6;
 
-#include <SoftwareSerial.h>// import the serial library
+int Up=0;
+int Fade=0;
 
-SoftwareSerial Genotronex(10, 11); // RX, TX
-int ledpin=13; // led on D13 will show blink on / off
-int BluetoothData; // the data given from Computer
+int updateTime = 10;
+
+int Step= 2;
+int lowEnd=25;
+int highEnd=250;
+
+unsigned long S1Delay1 = 0;
+unsigned long S1Delay2 = 0;
 
 void setup() {
-  // put your setup code here, to run once:
-  Genotronex.begin(9600);
-  Genotronex.println("Bluetooth On please press 1 or 0 blink LED ..");
-  pinMode(ledpin,OUTPUT);
+  
+  pinMode(Set1, OUTPUT);
+  pinMode(Set2, OUTPUT);
+  pinMode(Set3, OUTPUT);
+
+  analogWrite(Set1, 0);
+  analogWrite(Set2, 0);
+  analogWrite(Set3, 0);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-   if (Genotronex.available()){
-    BluetoothData=Genotronex.read();
-    if(BluetoothData=='1'){   // if number 1 pressed ....
-    digitalWrite(ledpin,1);
-    Genotronex.println("LED  On D13 ON ! ");
-   }
-  if (BluetoothData=='0'){// if number 0 pressed ....
-    digitalWrite(ledpin,0);
-    Genotronex.println("LED  On D13 Off ! ");
+
+  if(S1Delay1==0){
+    S1Delay1 = millis();
   }
-}
-delay(100);// prepare for next data ...
+
+  S1Delay2 = millis();
+  if(S1Delay2 - S1Delay1 > updateTime){
+    S1Delay1=0;
+    S1Delay2=0;
+    if(Fade>=highEnd){
+      Up=0;
+      }
+    else if(Fade<=lowEnd){
+      Up=1;
+      }
+    switch(Up){
+      case 0:
+        Fade=Fade-Step;
+      break;
+      case 1:
+        Fade=Fade+Step;
+      break;
+      }
+    }
+
+    analogWrite(Set1, Fade);
+    
 }
