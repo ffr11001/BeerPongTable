@@ -91,10 +91,10 @@ void loop() {
   if(BlueTooth.available()>0){
     String temp = BlueTooth.readString();
     temp.toCharArray(ch_arr, 4);
-    Serial.println(ch_arr[0]);
+    /*Serial.println(ch_arr[0]);
     Serial.println(ch_arr[1]);
     Serial.println(ch_arr[2]);
-    Serial.println(ch_arr[3]); 
+    Serial.println(ch_arr[3]);*/ 
     BlueTooth.flush(); 
     Set(ch_arr);
   }
@@ -112,6 +112,7 @@ void AUX () {
     spectrumValue[i]=map(spectrumValue[i], filter,1023,0,255);
   }
   Fade=spectrumValue[0];
+  Serial.println(analogRead(auxIn));
 }
 
 void MIC () {
@@ -163,15 +164,15 @@ void Set (char ch_arr[]){
   switch(ch_arr[0]){
       case '0':
         Mode= ch_arr[1] - '0';
-        Serial.println("-Mode"); 
+        Serial.println("Mode"); 
       break;
       case '1':
         updateTime = ch_arr[1] - '0' + 1;
-        Serial.println("!!!!!!Mode"); 
+        Serial.println("SemiMode"); 
       break;
       case '2':
         Input = ch_arr[1] - '0';
-        Serial.println("!!!!!!Mode"); 
+        Serial.println("AdvancedMode"); 
       break;
   }
     Serial.println(Mode); 
