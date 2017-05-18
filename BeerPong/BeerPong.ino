@@ -2,18 +2,31 @@
 
 SoftwareSerial BlueTooth(10, 11); // RX, TX
 
-int B_R = 3;
-int R_B = 5;
-int G_G = 6;
+// Pins setup
+
+int auxIn = 0;
+int micIn = 1;
+
+int strobePin=2;
+int resetPin=3;
+
+int B_R = 5;
+int R_B = 6;
+int G_G = 9;
+
+// Global variables
 
 int Up=0;
 int Fade=0;
 
 int Mode =0;
+int Input=0;
 
 char ch_arr[3];
+int spectrumValue[7];
 int updateTime = 10;
 
+int filter=80;
 int Step= 2;
 int lowEnd=0;
 int highEnd=250;
@@ -40,33 +53,17 @@ void setup() {
 
 void loop() {
 
-  if(S1Delay1==0){
-    S1Delay1 = millis();
-  }
-
-  S1Delay2 = millis();
-  if(S1Delay2 - S1Delay1 > updateTime){
-    S1Delay1=0;
-    S1Delay2=0;
-    if(Fade>=highEnd){
-      Up=0;
-      }
-    else if(Fade<=lowEnd){
-      Up=1;
-      }
-    switch(Up){
+  switch(Input){
       case 0:
-        Fade=Fade-Step;
+        changeFade();
       break;
       case 1:
-        Fade=Fade+Step;
+        AUX();
       break;
-      }
-      
-    inc++;
-    inc= Reset(inc);
-    }
-
+      case 2:
+        MIC();
+      break;
+  }
 
   switch(Mode){
       case 0:
@@ -94,12 +91,71 @@ void loop() {
   if(BlueTooth.available()>0){
     String temp = BlueTooth.readString();
     temp.toCharArray(ch_arr, 4);
-    Serial.println(ch_arr[0]);
+    /*Serial.println(ch_arr[0]);
     Serial.println(ch_arr[1]);
     Serial.println(ch_arr[2]);
-    Serial.println(ch_arr[3]); 
+    Serial.println(ch_arr[3]);*/ 
     BlueTooth.flush(); 
     Set(ch_arr);
+  }
+}
+
+void AUX () {
+  
+  digitalWrite(resetPin, HIGH);
+  digitalWrite(resetPin, LOW);
+  for (int i=0;i<7;i++){
+    digitalWrite(strobePin, LOW);
+    delayMicroseconds(30);
+    spectrumValue[i]=analogRead(auxIn);
+    spectrumValue[i]=constrain(spectrumValue[i], filter, 1023);
+    spectrumValue[i]=map(spectrumValue[i], filter,1023,0,255);
+  }
+  Fade=spectrumValue[0];
+  Serial.println(analogRead(auxIn));
+}
+
+void MIC () {
+  
+  digitalWrite(resetPin, HIGH);
+  digitalWrite(resetPin, LOW);
+  for (int i=0;i<7;i++){
+    digitalWrite(strobePin, LOW);
+    delayMicroseconds(30);
+    spectrumValue[i]=analogRead(micIn);
+    spectrumValue[i]=constrain(spectrumValue[i], filter, 1023);
+    spectrumValue[i]=map(spectrumValue[i], filter,1023,0,255);
+  }
+  Fade=spectrumValue[0];
+}
+
+void changeFade (){
+  
+  if(S1Delay1==0){
+    S1Delay1 = millis();
+  }
+
+  S1Delay2 = millis();
+  if(S1Delay2 - S1Delay1 > updateTime){
+    S1Delay1=0;
+    S1Delay2=0;
+    if(Fade>=highEnd){
+      Up=0;
+      }
+    else if(Fade<=lowEnd){
+      Up=1;
+      }
+    switch(Up){
+      case 0:
+        Fade=Fade-Step;
+      break;
+      case 1:
+        Fade=Fade+Step;
+      break;
+      }
+      
+    inc++;
+    inc= Reset(inc);
   }
 }
 
@@ -108,14 +164,19 @@ void Set (char ch_arr[]){
   switch(ch_arr[0]){
       case '0':
         Mode= ch_arr[1] - '0';
-        Serial.println("-Mode"); 
+        Serial.println("Mode"); 
       break;
       case '1':
         updateTime = ch_arr[1] - '0' + 1;
-        Serial.println("!!!!!!Mode"); 
+        Serial.println("SemiMode"); 
+      break;
+      case '2':
+        Input = ch_arr[1] - '0';
+        Serial.println("AdvancedMode"); 
       break;
   }
     Serial.println(Mode); 
+    Serial.println(Input); 
     Serial.println(updateTime);  
 }
 
