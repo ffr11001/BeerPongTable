@@ -5,7 +5,7 @@ SoftwareSerial BlueTooth(10, 11); // RX, TX
 // Pins setup
 
 int auxIn = 0;
-int micIn = 1;
+//int micIn = 1;
 
 int strobePin=2;
 int resetPin=3;
@@ -55,13 +55,16 @@ void loop() {
 
   switch(Input){
       case 0:
-        changeFade();
+        Fade = 200;
       break;
       case 1:
-        AUX();
+        changeFade();
       break;
       case 2:
-        MIC();
+        AUX();
+      break;
+      case 3:
+        resetInput();
       break;
   }
 
@@ -91,10 +94,6 @@ void loop() {
   if(BlueTooth.available()>0){
     String temp = BlueTooth.readString();
     temp.toCharArray(ch_arr, 4);
-    /*Serial.println(ch_arr[0]);
-    Serial.println(ch_arr[1]);
-    Serial.println(ch_arr[2]);
-    Serial.println(ch_arr[3]);*/ 
     BlueTooth.flush(); 
     Set(ch_arr);
   }
@@ -113,20 +112,6 @@ void AUX () {
   }
   Fade=spectrumValue[0];
   Serial.println(analogRead(auxIn));
-}
-
-void MIC () {
-  
-  digitalWrite(resetPin, HIGH);
-  digitalWrite(resetPin, LOW);
-  for (int i=0;i<7;i++){
-    digitalWrite(strobePin, LOW);
-    delayMicroseconds(30);
-    spectrumValue[i]=analogRead(micIn);
-    spectrumValue[i]=constrain(spectrumValue[i], filter, 1023);
-    spectrumValue[i]=map(spectrumValue[i], filter,1023,0,255);
-  }
-  Fade=spectrumValue[0];
 }
 
 void changeFade (){
@@ -281,6 +266,22 @@ void madness (int i){
       break;
   }
 }
+
+void resetInput (){
+   Up=0;
+   Fade=0;
+
+   Mode =0;
+   Input=0;
+
+   updateTime = 10;
+
+   filter=80;
+   Step= 2;
+   lowEnd=0;
+   highEnd=250;
+  
+  }
 
 int Reset (int i){
   if(i>1000000){
